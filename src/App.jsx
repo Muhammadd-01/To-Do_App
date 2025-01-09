@@ -1,5 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import Confetti from 'react-confetti'
 import TaskInput from './components/TaskInput'
 import TaskList from './components/TaskList'
 import Footer from './components/Footer'
@@ -14,12 +15,21 @@ function App() {
   const { theme, toggleTheme } = useTheme()
   const [showFeedback, setShowFeedback] = useState(false)
   const [showMotivationalPopup, setShowMotivationalPopup] = useState(false)
+  const [showConfetti, setShowConfetti] = useState(false)
   const [filter, setFilter] = useState('all')
 
   const handleTaskCompletion = (taskId) => {
     toggleTask(taskId)
     setShowMotivationalPopup(true)
+    setShowConfetti(true)
   }
+
+  useEffect(() => {
+    if (showConfetti) {
+      const timer = setTimeout(() => setShowConfetti(false), 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [showConfetti])
 
   const filteredTasks = tasks.filter(task => {
     if (filter === 'active') return !task.completed
@@ -35,6 +45,7 @@ function App() {
       theme === 'dark' ? 'bg-gray-900' : 'bg-blue-50'
     } text-gray-900`}>
       <BackgroundAnimation theme={theme} />
+      {showConfetti && <Confetti recycle={false} numberOfPieces={200} />}
       <div className="container mx-auto px-4 py-8 pb-24 relative z-10">
         <motion.header 
           className="text-center mb-8"
@@ -42,10 +53,12 @@ function App() {
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5 }}
         >
-          <h1 className="text-4xl font-bold text-gray-900">
+          <h1 className={`text-4xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
             Awesome To-Do List
           </h1>
-          <p className="mt-2 text-lg text-gray-700">Stay organized and boost your productivity!</p>
+          <p className={`mt-2 text-lg ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+            Stay organized and boost your productivity!
+          </p>
           <div className="mt-4 space-x-4">
             <button
               onClick={toggleTheme}
