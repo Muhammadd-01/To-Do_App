@@ -4,25 +4,48 @@ import TaskInput from './components/TaskInput'
 import TaskList from './components/TaskList'
 import Footer from './components/Footer'
 import FeedbackPage from './components/FeedbackPage'
+import BackgroundAnimation from './components/BackgroundAnimation'
 import useTasks from './hooks/useTasks'
 import useTheme from './hooks/useTheme'
-import BackgroundAnimation from './components/BackgroundAnimation'
+import MotivationalPopup from './components/MotivationalPopup'
 
 function App() {
   const { tasks, addTask, toggleTask, deleteTask, editTask, clearCompletedTasks } = useTasks()
   const { theme, toggleTheme } = useTheme()
   const [showFeedback, setShowFeedback] = useState(false)
+  const [showMotivationalPopup, setShowMotivationalPopup] = useState(false)
+  const [filter, setFilter] = useState('all')
+
+  const handleTaskCompletion = (taskId) => {
+    toggleTask(taskId)
+    setShowMotivationalPopup(true)
+  }
+
+  const filteredTasks = tasks.filter(task => {
+    if (filter === 'active') return !task.completed
+    if (filter === 'completed') return task.completed
+    return true
+  })
+
+  const activeTasks = tasks.filter(task => !task.completed).length
+  const completedTasks = tasks.filter(task => task.completed).length
 
   return (
-    <div className={`min-h-screen relative overflow-hidden ${theme === 'dark' ? 'bg-gray-900 text-gray-100' : 'bg-gradient-to-r from-blue-100 to-purple-100 text-gray-900'}`}>
-      <div className="container mx-auto px-4 py-8 pb-16">
+    <div className={`min-h-screen relative overflow-hidden ${
+      theme === 'dark' ? 'bg-gray-900' : 'bg-blue-50'
+    } text-gray-900`}>
+      <BackgroundAnimation theme={theme} />
+      <div className="container mx-auto px-4 py-8 pb-24 relative z-10">
         <motion.header 
           className="text-center mb-8"
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5 }}
         >
-          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-violet-500">To-Do List</h1>
+          <h1 className="text-4xl font-bold text-gray-900">
+            Awesome To-Do List
+          </h1>
+          <p className="mt-2 text-lg text-gray-700">Stay organized and boost your productivity!</p>
           <div className="mt-4 space-x-4">
             <button
               onClick={toggleTheme}
@@ -43,16 +66,38 @@ function App() {
             <FeedbackPage setShowFeedback={setShowFeedback} />
           ) : (
             <motion.div 
-              className={`max-w-md mx-auto ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg p-6`}
+              className={`max-w-md mx-auto ${
+                theme === 'dark' ? 'bg-gray-200' : 'bg-white'
+              } rounded-lg shadow-lg p-6`}
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
               <TaskInput addTask={addTask} />
+              <div className="mb-4 flex justify-center space-x-2">
+                <button
+                  onClick={() => setFilter('all')}
+                  className={`px-3 py-1 rounded ${filter === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+                >
+                  All
+                </button>
+                <button
+                  onClick={() => setFilter('active')}
+                  className={`px-3 py-1 rounded ${filter === 'active' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+                >
+                  Active
+                </button>
+                <button
+                  onClick={() => setFilter('completed')}
+                  className={`px-3 py-1 rounded ${filter === 'completed' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+                >
+                  Completed
+                </button>
+              </div>
               <TaskList
-                tasks={tasks}
-                toggleTask={toggleTask}
+                tasks={filteredTasks}
+                toggleTask={handleTaskCompletion}
                 deleteTask={deleteTask}
                 editTask={editTask}
               />
@@ -66,15 +111,20 @@ function App() {
                   Clear Completed Tasks
                 </motion.button>
               )}
-              <div className="mt-4 text-sm">
-                Total tasks: {tasks.length} | Completed: {tasks.filter(task => task.completed).length}
+              <div className="mt-4 text-sm flex justify-between">
+                <span>Total tasks: {tasks.length}</span>
+                <span>Active: {activeTasks}</span>
+                <span>Completed: {completedTasks}</span>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
+        <MotivationalPopup
+          isVisible={showMotivationalPopup}
+          onClose={() => setShowMotivationalPopup(false)}
+        />
       </div>
-      <BackgroundAnimation theme={theme} />
-      <Footer />
+      <Footer tasks={tasks} />
     </div>
   )
 }
